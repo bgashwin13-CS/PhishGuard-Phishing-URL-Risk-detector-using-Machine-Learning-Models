@@ -1,25 +1,11 @@
-const $=id=>document.getElementById(id);
-const scan=$('scan'),input=$('url'),error=$('error'),result=$('result');
-function safeText(el,value){el.textContent=value}
-async function analyze(){
- error.textContent=''; const url=input.value.trim();
- if(!url){error.textContent='Paste a URL first.';input.focus();return}
- scan.disabled=true;scan.textContent='Analyzing URL…';
- try{
-  const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-  const d=await r.json(); if(!r.ok) throw new Error(d.error||'Analysis failed.');
-  safeText($('score'),d.score); safeText($('badge'),d.label); safeText($('message'),d.message);
-  $('verdict').className='verdict '+d.level; $('meter').className=d.level; $('meter').style.width=d.score+'%';
-  safeText($('combined'),d.combined_probability.toFixed(2)+'%');
-  safeText($('rf'),d.random_forest_probability.toFixed(2)+'%'); safeText($('xgb'),d.xgboost_probability.toFixed(2)+'%');
-  safeText($('rfms'),'This request: '+d.rf_ms+' ms'); safeText($('xgbms'),'This request: '+d.xgb_ms+' ms');
-  safeText($('normalized'),d.normalized_url);
-  const f=$('features');f.innerHTML='';
-  Object.entries(d.features).forEach(([k,v])=>{const x=document.createElement('div'),s=document.createElement('span'),b=document.createElement('b');s.textContent=k;b.textContent=typeof v==='number'?String(Math.round(v*10000)/10000):String(v);x.append(s,b);f.appendChild(x)});
-  result.classList.remove('hidden');result.scrollIntoView({behavior:'smooth',block:'start'});
- }catch(e){error.textContent=e.message}
- finally{scan.disabled=false;scan.textContent='Analyze URL'}
-}
-scan.addEventListener('click',analyze);
-input.addEventListener('keydown',e=>{if(e.key==='Enter')analyze()});
-$('toggle')?.addEventListener('click',()=>{const f=$('features');f.classList.toggle('hidden');$('toggle').textContent=f.classList.contains('hidden')?'View 22 Extracted Features':'Hide Extracted Features'});
+const $=x=>document.getElementById(x),scan=$("scan"),input=$("url"),err=$("error"),analysis=$("analysis"),progress=$("progress");
+const txt=(id,v)=>$(id).textContent=v;
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+async function analyze(){const url=input.value.trim();err.textContent="";if(!url){err.textContent="Paste a URL first.";input.focus();return}scan.disabled=true;scan.textContent="SCANNING…";progress.classList.remove("hidden");$("progressbar").style.width="15%";await wait(120);$("progressbar").style.width="42%";
+try{const req=fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});await wait(160);$("progressbar").style.width="72%";const r=await req,d=await r.json();if(!r.ok)throw Error(d.error||"Analysis failed");$("progressbar").style.width="100%";await wait(180);
+txt("badge",d.label);txt("message",d.message);txt("score",d.score);txt("combined",d.combined_probability.toFixed(2)+"%");txt("rf",d.random_forest_probability.toFixed(2)+"%");txt("xgb",d.xgboost_probability.toFixed(2)+"%");txt("rfms",d.rf_ms+" ms");txt("xgbms",d.xgb_ms+" ms");txt("totalms",d.total_ms+" ms");txt("normalized",d.normalized_url);
+$("verdict").className="verdict "+d.level;$("meter").className=d.level;$("meter").style.width=d.score+"%";$("rfbar").style.width=d.random_forest_probability+"%";$("xgbbar").style.width=d.xgboost_probability+"%";
+const sig=$("signals");sig.innerHTML="";d.signals.forEach(s=>{const a=document.createElement("article");a.className=s.status;const icon=s.status==="good"?"✓":s.status==="bad"?"!":"?";a.innerHTML="<b>"+icon+"</b><div><strong></strong><p></p></div>";a.querySelector("strong").textContent=s.name;a.querySelector("p").textContent=s.detail;sig.appendChild(a)});
+const f=$("features");f.innerHTML="";Object.entries(d.features).forEach(([k,v])=>{const a=document.createElement("article"),s=document.createElement("span"),b=document.createElement("b");s.textContent=k;b.textContent=typeof v==="number"?Math.round(v*10000)/10000:v;a.append(s,b);f.appendChild(a)});
+analysis.classList.remove("hidden");analysis.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){err.textContent=e.message}finally{setTimeout(()=>progress.classList.add("hidden"),350);scan.disabled=false;scan.textContent="SCAN URL"}}
+scan.addEventListener("click",analyze);input.addEventListener("keydown",e=>{if(e.key==="Enter")analyze()});$("toggle").addEventListener("click",()=>{const f=$("features");f.classList.toggle("hidden");$("toggle").textContent=f.classList.contains("hidden")?"View all 22 extracted ML features":"Hide extracted ML features"});
