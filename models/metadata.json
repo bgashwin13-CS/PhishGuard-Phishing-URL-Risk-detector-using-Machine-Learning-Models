@@ -1,0 +1,34 @@
+{
+  "features": [
+    "URLLength",
+    "DomainLength",
+    "IsDomainIP",
+    "NoOfSubDomain",
+    "LetterRatioInURL",
+    "NoOfDegitsInURL",
+    "DegitRatioInURL",
+    "NoOfEqualsInURL",
+    "NoOfQMarkInURL",
+    "NoOfAmpersandInURL",
+    "NoOfOtherSpecialCharsInURL",
+    "SpacialCharRatioInURL",
+    "IsHTTPS",
+    "PathLength",
+    "QueryLength",
+    "PathDepth",
+    "HyphenCount",
+    "DotCount",
+    "AtCount",
+    "PercentCount",
+    "Entropy",
+    "SuspiciousTokenCount"
+  ],
+  "positive_class": "phishing",
+  "split": "stratified 80/20, random_state=42",
+  "score": "round(100*p)",
+  "bands": {
+    "low": "0-34",
+    "suspicious": "35-69",
+    "high": "70-100"
+  }
+}

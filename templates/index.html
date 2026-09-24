@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | URL Safety Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <b>PhishGuard</b>
+        <small>Smart URL Safety Checker</small>
+    </div>
+
+    <nav>
+        <a href="#checker">URL Checker</a>
+        <a href="#how">How It Works</a>
+        <a href="#performance">Performance</a>
+    </nav>
+
+    <div class="status {{ 'ok' if ready else 'bad' }}">
+        ● {{ 'System Ready' if ready else 'System Not Ready' }}
+    </div>
+</header>
+
+
+<main>
+
+<section class="hero" id="checker">
+
+    <div class="link-decoration link-one">🔗</div>
+    <div class="link-decoration link-two">https://</div>
+    <div class="link-decoration link-three">&lt;/&gt;</div>
+    <div class="link-decoration link-four">www.</div>
+
+    <div class="hero-content">
+
+        <span class="eyebrow">PHISHING URL CHECKER</span>
+
+        <h1>Check a link before<br>you trust it.</h1>
+
+        <p class="intro">
+            Received an unfamiliar link? Paste it below.
+            PhishGuard examines the URL and estimates its phishing risk
+            without opening the destination website.
+        </p>
+
+        <div class="search">
+            <span class="search-icon">🔗</span>
+
+            <input
+                id="url"
+                type="text"
+                placeholder="Paste a URL here..."
+                autocomplete="off"
+            >
+
+            <button id="scan">Check Link</button>
+        </div>
+
+        <div id="error"></div>
+
+        <div class="quick-tests">
+            <span>Quick examples:</span>
+
+            <button
+                type="button"
+                onclick="document.getElementById('url').value='https://www.google.com'">
+                google.com
+            </button>
+
+            <button
+                type="button"
+                onclick="document.getElementById('url').value='http://secure-login-account.verify-user.invalid/update'">
+                suspicious example
+            </button>
+        </div>
+
+        <p class="privacy-note">
+            🔒 The destination page is not opened during analysis.
+        </p>
+
+    </div>
+</section>
+
+
+<section id="result" class="hidden results-section">
+
+    <div class="section-heading">
+        <span>LINK ANALYSIS</span>
+        <h2>Your URL Check</h2>
+    </div>
+
+    <div class="result-grid">
+
+        <article class="score-card">
+            <span>OVERALL RISK SCORE</span>
+
+            <div class="score">
+                <b id="score">--</b>
+                <em>/100</em>
+            </div>
+
+            <div id="badge" class="badge">--</div>
+
+            <p id="message"></p>
+
+            <div class="meter">
+                <i id="meter"></i>
+            </div>
+        </article>
+
+
+        <article class="model-card">
+            <div class="card-number">01</div>
+
+            <h3>Random Forest</h3>
+
+            <div class="prob" id="rf">--%</div>
+
+            <p>Estimated phishing probability</p>
+
+            <small id="rfms"></small>
+        </article>
+
+
+        <article class="model-card">
+            <div class="card-number">02</div>
+
+            <h3>XGBoost</h3>
+
+            <div class="prob" id="xgb">--%</div>
+
+            <p>Estimated phishing probability</p>
+
+            <small id="xgbms"></small>
+        </article>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div>
+            <span class="panel-label">LINK CHECKED</span>
+            <p id="normalized" class="mono"></p>
+        </div>
+
+        <button class="secondary" id="toggle">
+            View URL Details
+        </button>
+
+    </div>
+
+    <div id="features" class="feature-grid hidden"></div>
+
+</section>
+
+
+<section class="how" id="how">
+
+    <div class="section-heading">
+        <span>SIMPLE PROCESS</span>
+        <h2>How PhishGuard works</h2>
+        <p>A link goes through four simple steps before you see the result.</p>
+    </div>
+
+    <div class="steps">
+
+        <div>
+            <b>01</b>
+            <div class="step-icon">🔗</div>
+            <h3>Paste the link</h3>
+            <p>Enter the URL you want to check.</p>
+        </div>
+
+        <div>
+            <b>02</b>
+            <div class="step-icon">www.</div>
+            <h3>Inspect the URL</h3>
+            <p>Important structural characteristics are extracted locally.</p>
+        </div>
+
+        <div>
+            <b>03</b>
+            <div class="step-icon">✓</div>
+            <h3>Analyze</h3>
+            <p>Random Forest and XGBoost independently examine the URL.</p>
+        </div>
+
+        <div>
+            <b>04</b>
+            <div class="step-icon">%</div>
+            <h3>See the risk</h3>
+            <p>Receive an easy-to-read phishing risk assessment.</p>
+        </div>
+
+    </div>
+
+</section>
+
+
+{% if metrics %}
+<section class="metrics" id="performance">
+
+    <div class="section-heading">
+        <span>MODEL PERFORMANCE</span>
+        <h2>Detection Performance</h2>
+    </div>
+
+    <div class="performance-grid">
+
+        {% for name,d in metrics.items() %}
+
+        <div class="performance-card">
+
+            <h3>{{ name }}</h3>
+
+            <div class="metric-row">
+                <span>Accuracy</span>
+                <b>{{ '%.2f'|format(d.accuracy * 100) }}%</b>
+            </div>
+
+            <div class="metric-row">
+                <span>Recall</span>
+                <b>{{ '%.2f'|format(d.recall * 100) }}%</b>
+            </div>
+
+            <div class="metric-row">
+                <span>F1 Score</span>
+                <b>{{ '%.2f'|format(d.f1 * 100) }}%</b>
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+{% endif %}
+
+
+<section class="safety-note">
+
+    <div class="safety-symbol">🔗</div>
+
+    <div>
+        <h2>Think before you click.</h2>
+
+        <p>
+            Phishing links can imitate familiar websites and login pages.
+            PhishGuard gives you an additional signal when checking an
+            unfamiliar URL.
+        </p>
+    </div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+    <div class="footer-top">
+
+        <div>
+            <strong>PhishGuard</strong>
+            <p>Smart URL Safety Checker</p>
+        </div>
+
+        <div class="footer-links">
+            <span>URL Analysis</span>
+            <span>Phishing Detection</span>
+            <span>Machine Learning</span>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <span>Made by</span>
+
+        <strong>
+            Ashwin B.G. &nbsp;•&nbsp;
+            Alagarraj K. &nbsp;•&nbsp;
+            Ajaay RS &nbsp;•&nbsp;
+            Dheeraj Reddy
+        </strong>
+    </div>
+
+</footer>
+
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+</html>
