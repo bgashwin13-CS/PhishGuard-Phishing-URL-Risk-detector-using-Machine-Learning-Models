@@ -28,11 +28,11 @@ URL is normalized and parsed
 
 ↓  
 
-22 URL-based features are extracted
+22 structural URL features plus character TF-IDF features are extracted
 
 ↓  
 
-Random Forest + XGBoost analyze the features
+Random Forest + XGBoost analyze the combined TF-IDF and structural features
 
 ↓  
 
@@ -272,7 +272,7 @@ This allows the trained models to evaluate URLs that were not explicitly present
 
 PhishGuard is a research prototype and should not be treated as a complete replacement for professional cybersecurity systems.
 
-The current system primarily analyzes the URL string. A sophisticated phishing website may use a normal-looking URL, while some legitimate URLs may contain unusual patterns and receive a higher risk score.
+The current system uses a hybrid URL-string pipeline: character TF-IDF plus 22 locally computed structural features. The same extractor and preprocessing artifacts are used in training and serving to prevent train/serve feature mismatch. No trusted-domain whitelist is used. A sophisticated phishing website may use a normal-looking URL, while some legitimate URLs may contain unusual patterns and receive a higher risk score.
 
 Future validation should include independent datasets, domain-grouped testing, chronological testing and additional security signals.
 
